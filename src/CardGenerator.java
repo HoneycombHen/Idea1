@@ -1,11 +1,10 @@
-import java.io.IOException;
-import java.util.Scanner;
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import javax.imageio.ImageIO;
+import java.util.Scanner;
 
 public class CardGenerator {
 
@@ -19,13 +18,13 @@ public class CardGenerator {
         // Start with dear ...
         System.out.print("Input who you are writing to here: ");
 
-        String recepient = scanner.nextLine();
+        String recipient = scanner.nextLine();
 
         System.out.print("\n");
 
         // Body of the note card
         System.out.print("Input your note body here: ");
-        String noteBody = scanner.nextLine();
+        String body = scanner.nextLine();
 
         System.out.print("\n");
 
@@ -33,14 +32,13 @@ public class CardGenerator {
         System.out.print("Input your name here: ");
         String writer = scanner.nextLine();
 
-        System.out.print("Dear " + recepient + ", \n");
-        System.out.print(noteBody + "\n");
-        System.out.print("Yours truly, \n" + writer);
-
         // Get the path to an image
 
         System.out.print("\nEnter the image path: ");
         String imagePath = scanner.nextLine().trim();
+
+        Card card = new Card(recipient, body, writer, imagePath);
+        System.out.print(card.getFormattedText());
 
         try {
             if (imagePath.isBlank()) {
