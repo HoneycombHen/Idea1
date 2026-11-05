@@ -1,11 +1,15 @@
+import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.PriorityQueue;
+import java.io.IOException;
 
 import javafx.application.Application;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.scene.Scene;
@@ -16,6 +20,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.control.TextField;
 
 import javafx.scene.layout.VBox;
+
+import javax.imageio.ImageIO;
 
 public class CardApp extends Application {
 
@@ -37,6 +43,7 @@ public class CardApp extends Application {
         Button chooseButton = new Button("Choose Image");
         Button loadButton = new Button("Load Image");
         Button loadCardButton = new Button("Load Card");
+        Button saveButton = new  Button("Save as PNG");
 
         ImageView preview = new ImageView();
         preview.setFitWidth(350);
@@ -103,7 +110,32 @@ public class CardApp extends Application {
         HBox hBox = new HBox(10, preview, cardLabel);
         HBox.getHgrow(cardLabel);
         VBox layout = new VBox(10, recipientField, bodyField, writerField, loadCardButton,
-                chooseButton, loadButton, hBox);
+                chooseButton, loadButton, saveButton, hBox);
+
+        // setup snapshot for PNG save
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.WHITE);
+
+
+        saveButton.setOnAction(event -> {
+            WritableImage snapshot = hBox.snapshot(params, null);
+            BufferedImage buffered = SwingFXUtils.fromFXImage(snapshot, null);
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Choose a png file");
+            chooser.setInitialFileName("card.png");
+            chooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter(
+                            "png files", "*.png")
+            );
+            File pngFile = chooser.showSaveDialog(stage);
+            try {
+                ImageIO.write(buffered, "png", pngFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+
 
 
         preview.fitWidthProperty().bind(layout.widthProperty().multiply(0.5));
