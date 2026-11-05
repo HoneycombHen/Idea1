@@ -31,7 +31,7 @@ public class Card {
     public String getFormattedText() {
         return "Dear " + recipient + ",\n"
                 + body + "\n"
-                + "Your's sincerely,\n"
+                + "Yours sincerely,\n"
                 + writer + "\n";
     }
 }

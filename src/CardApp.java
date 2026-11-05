@@ -8,6 +8,7 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -27,6 +28,13 @@ public class CardApp extends Application {
 
     // Remembers the chosen file while the app is running
     private File selectedImageFile;
+    private static final int FIELD_WIDTH = 200;
+    private static final int LABEL_WIDTH = 150;
+    private static final int SPACING = 10;
+    private static final double IMAGE_WIDTH_SHARE = 0.5;
+    private static final double IMAGE_HEIGHT_SHARE = 0.4;
+    private static final int WINDOW_WIDTH = 450;
+    private static final int WINDOW_HEIGHT = 500;
 
     public static void main(String[] args) {
         launch(args);
@@ -37,26 +45,26 @@ public class CardApp extends Application {
         Label status = new Label("No image selected");
         Label cardLabel = new Label("Fill up the card");
         cardLabel.setMinHeight(Region.USE_PREF_SIZE);
+        cardLabel.setMinWidth(LABEL_WIDTH);
         cardLabel.setMaxWidth(Double.MAX_VALUE);
+        cardLabel.setWrapText(true);
         status.setWrapText(true);
 
         Button chooseButton = new Button("Choose Image");
-        Button loadButton = new Button("Load Image");
+        Button loadImageButton = new Button("Load Image");
         Button loadCardButton = new Button("Load Card");
         Button saveButton = new  Button("Save as PNG");
 
-        ImageView preview = new ImageView();
-        preview.setFitWidth(350);
-        preview.setPreserveRatio(true);
+        ImageView imageView = new ImageView();
 
         TextField recipientField = new TextField();
-        recipientField.setMaxWidth(200);
+        recipientField.setMaxWidth(FIELD_WIDTH);
         TextArea bodyField = new TextArea();
-        bodyField.setMaxWidth(200);
+        bodyField.setMaxWidth(FIELD_WIDTH);
         bodyField.setWrapText(true);
         bodyField.setPrefRowCount(2);
         TextField writerField = new TextField();
-        writerField.setMaxWidth(200);
+        writerField.setMaxWidth(FIELD_WIDTH);
 
         // load card button
         loadCardButton.setOnAction(event -> {
@@ -69,10 +77,6 @@ public class CardApp extends Application {
             cardLabel.setText(cardFormattedText);
         });
 
-        cardLabel.setWrapText(true);
-
-
-        // choose file button
         chooseButton.setOnAction(event -> {
             FileChooser chooser = new FileChooser();
             chooser.setTitle("Choose an image");
@@ -89,8 +93,8 @@ public class CardApp extends Application {
             }
         });
 
-        // load button stuff
-        loadButton.setOnAction(event -> {
+        // Load image into card preview
+        loadImageButton.setOnAction(event -> {
             if (selectedImageFile == null) {
                 status.setText("Choose an image first.");
                 return;
@@ -103,14 +107,16 @@ public class CardApp extends Application {
                 return;
             }
 
-            preview.setImage(image);
+            imageView.setImage(image);
             status.setText("Image loaded: " + selectedImageFile.getName());
         });
 
-        HBox hBox = new HBox(10, preview, cardLabel);
-        HBox.getHgrow(cardLabel);
-        VBox layout = new VBox(10, recipientField, bodyField, writerField, loadCardButton,
-                chooseButton, loadButton, saveButton, hBox);
+        HBox cardView = new HBox(SPACING, imageView, cardLabel);
+        HBox.setHgrow(cardLabel, Priority.ALWAYS);
+
+
+        VBox root = new VBox(SPACING, recipientField, bodyField, writerField, loadCardButton,
+                status, chooseButton, loadImageButton, saveButton, cardView);
 
         // setup snapshot for PNG save
         SnapshotParameters params = new SnapshotParameters();
@@ -118,32 +124,35 @@ public class CardApp extends Application {
 
 
         saveButton.setOnAction(event -> {
-            WritableImage snapshot = hBox.snapshot(params, null);
-            BufferedImage buffered = SwingFXUtils.fromFXImage(snapshot, null);
             FileChooser chooser = new FileChooser();
-            chooser.setTitle("Choose a png file");
-            chooser.setInitialFileName("card.png");
             chooser.getExtensionFilters().add(
                     new FileChooser.ExtensionFilter(
                             "png files", "*.png")
             );
+            chooser.setTitle("Choose a png file");
+            chooser.setInitialFileName("card.png");
             File pngFile = chooser.showSaveDialog(stage);
+            if (pngFile == null) {
+                return;
+            }
+
+            WritableImage snapshot = cardView.snapshot(params, null);
+            BufferedImage buffered = SwingFXUtils.fromFXImage(snapshot, null);
             try {
                 ImageIO.write(buffered, "png", pngFile);
+                status.setText("Saved");
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                status.setText("Could not save: " + e.getMessage());
             }
         });
 
 
+        imageView.fitWidthProperty().bind(root.widthProperty().multiply(IMAGE_WIDTH_SHARE));
+        imageView.fitHeightProperty().bind(root.heightProperty().multiply(IMAGE_HEIGHT_SHARE));
+        imageView.setPreserveRatio(true);
 
 
-        preview.fitWidthProperty().bind(layout.widthProperty().multiply(0.5));
-        preview.fitHeightProperty().bind(layout.heightProperty().multiply(0.4));
-        preview.setPreserveRatio(true);
-
-
-        Scene scene = new Scene(layout, 450, 500);
+        Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
 
         stage.setTitle("Note Card");
         stage.setScene(scene);
